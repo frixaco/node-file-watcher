@@ -1,19 +1,42 @@
-const http = require('http');
-const router = require('router');
-const finalHandler = require('finalhandler');
+'use strict';
 
-console.log(router.get);
-console.log(finalHandler);
+import http from 'http'
+import getGreeting from './getGreeting.js'
+import postUser from './postUser.js'
 
-const server = http.createServer();
+const router = {
+    'GET': {
+        '/greeting': getGreeting,
+    },
+    'POST': {
+        '/user': postUser,
+    }
+}
 
-server.on('request', (request, response) => {
-    const { method, url, headers } = request;
+const server = http.createServer((req, res) => {
+    const { method, url, headers } = req;
+    console.log(method, url)
 
-    response.writeHead(200, { 'Content-Type': 'application/json' })
+    const response = router[method][url] 
 
-    response.end(JSON.stringify({ msg: 'hello world' }));
-})
+    if (!response) {
+        res.write(JSON.stringify("404 NOT FOUND"))
+        res.end()
+    } else {
+        console.log('response', response)
+        let result;
+        if (response.then) {
+            console.log('async')
+            // TODO: How to add async support???
+            result = response.then(d => d)
+        } else {
+            result = response()
+        }
+
+        res.write(JSON.stringify(result))
+        res.end()
+    }
+});
 
 server.listen(3000, () => console.log('Server is up'))
 
